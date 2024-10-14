@@ -10,19 +10,20 @@ const firebaseConfig = {
 };
 
 // Firebase'i başlat
-firebase.initializeApp(firebaseConfig);
+const app = firebase.initializeApp(firebaseConfig);
 
 // Firestore referansını al
 const db = firebase.firestore();
 const pricesRef = db.collection('prices');
 
-// DOM öğelerini al
 const priceForm = document.getElementById('priceForm');
 const priceList = document.getElementById('priceList');
 const averagePriceElement = document.getElementById('averagePrice');
 const resetButton = document.getElementById('resetButton');
 const resetPassword = document.getElementById('resetPassword');
 const messageElement = document.getElementById('message');
+
+const correctPassword = '79066540'; // Şifre kontrolü için kullanılacak
 
 // Sayfa yüklendiğinde fiyatları göster
 renderPrices();
@@ -49,8 +50,7 @@ priceForm.addEventListener('submit', function(event) {
     const date = document.getElementById('date').value;
     const price = parseFloat(document.getElementById('price').value);
 
-    // Gönderilen veriyi kontrol et
-    console.log("Gönderilen veri:", { stock, date, price });
+    console.log("Gönderilen veri:", { stock, date, price }); // Debug için
 
     if (!stock || !date || isNaN(price) || price <= 0) {
         alert('Lütfen tüm alanları doğru bir şekilde doldurun.');
@@ -70,7 +70,53 @@ priceForm.addEventListener('submit', function(event) {
     });
 });
 
-// Ortalama fiyat güncelleme ve diğer işlevler...
+// Tarih alanına otomatik / ekleme
+const dateInput = document.getElementById('date');
+dateInput.addEventListener('input', function(event) {
+    let value = dateInput.value.replace(/[^0-9]/g, ''); // Sadece rakamları al
+    if (value.length >= 2) {
+        value = value.slice(0, 2) + '/' + value.slice(2); // gg/aa formatı
+    }
+    if (value.length >= 5) {
+        value = value.slice(0, 5) + '/' + value.slice(5); // gg/aa/yyyy formatı
+    }
+    dateInput.value = value; // Güncellenmiş değeri inputa yaz
+});
+
+resetButton.addEventListener('click', function() {
+    const enteredPassword = resetPassword.value;
+
+    if (enteredPassword === correctPassword) {
+        pricesRef.get().then(snapshot => {
+            const batch = db.batch();
+            snapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            return batch.commit();
+        }).then(() => {
+            renderPrices();
+            alert('Geçmiş sıfırlandı.');
+            resetPassword.value = '';
+        }).catch(error => {
+            console.error("Geçmiş sıfırlanırken hata: ", error);
+            alert("Geçmişi sıfırlarken hata oluştu.");
+        });
+    } else {
+        alert('Yanlış şifre. Lütfen tekrar deneyin.');
+    }
+});
+
+function updateAveragePrice() {
+    pricesRef.get().then(snapshot => {
+        const prices = snapshot.docs.map(doc => doc.data().price);
+        const total = prices.reduce((sum, price) => sum + price, 0);
+        const average = prices.length ? total / prices.length : 0;
+        averagePriceElement.textContent = average.toFixed(2);
+    }).catch(error => {
+        console.error("Ortalama fiyat hesaplanırken hata: ", error);
+    });
+}
+
 
 
 
