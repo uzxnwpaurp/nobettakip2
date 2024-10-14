@@ -1,1 +1,41 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borsa Hesaplama</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Borsa Fiyat Girişi</h1>
+        <form id="priceForm">
+            <label for="stock">Hisse Senedi Seç:</label>
+            <select id="stock" required>
+                <option value="Acil">Acil</option>
+                <option value="Pediatri">Pediatri</option>
+                <option value="Genel Cerrahi">Genel Cerrahi</option>
+                <option value="Dahiliye">Dahiliye</option>
+                <option value="Kadın Doğum">Kadın Doğum</option>
+                <option value="Seçmeli">Seçmeli</option>
+            </select>
 
+            <label for="date">Tarih:</label>
+            <input type="date" id="date" required>
+
+            <label for="price">Fiyat:</label>
+            <input type="number" id="price" step="0.01" required>
+
+            <button type="submit">Ekle</button>
+        </form>
+
+        <h2>Girdiğiniz Fiyatlar:</h2>
+        <ul id="priceList"></ul>
+
+        <h2>Ortalama Fiyat:</h2>
+        <p id="averagePrice">0.00</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
