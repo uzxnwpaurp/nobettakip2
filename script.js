@@ -1,10 +1,4 @@
-const priceForm = document.getElementById('priceForm');
-const priceList = document.getElementById('priceList');
-const averagePriceElement = document.getElementById('averagePrice');
-const resetButton = document.getElementById('resetButton');
-const resetPassword = document.getElementById('resetPassword');
-
-// Firebase yapılandırma bilgileri
+// Firebase SDK'nın başlatılması
 const firebaseConfig = {
   apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
   authDomain: "nobettakip-447bf.firebaseapp.com",
@@ -17,35 +11,41 @@ const firebaseConfig = {
 
 // Firebase'i başlat
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(); // Firestore veritabanı örneğini al
+
+// Firestore'a referans al
+const db = firebase.firestore();
+
+const priceForm = document.getElementById('priceForm');
+const priceList = document.getElementById('priceList');
+const averagePriceElement = document.getElementById('averagePrice');
+const resetButton = document.getElementById('resetButton');
+const resetPassword = document.getElementById('resetPassword');
 
 // Şifre tanımla
 const correctPassword = '79066540'; // Burada istediğin şifreyi belirleyebilirsin
 
 // Sayfa yüklendiğinde fiyatları göster
-window.onload = loadPrices;
+loadPrices();
 
 function loadPrices() {
-    db.collection("prices").orderBy("timestamp", "desc").get().then((querySnapshot) => {
-        prices = []; // Önceki fiyatları sıfırla
+    db.collection("prices").get().then((querySnapshot) => {
+        priceList.innerHTML = ''; // Mevcut listeyi temizle
+        let prices = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             prices.push(data);
+            const listItem = document.createElement('li');
+            listItem.textContent = `${data.stock} - ${data.date}: ${data.price.toFixed(2)} TL`;
+            priceList.appendChild(listItem);
         });
-        renderPrices();
-    }).catch((error) => {
-        console.error("Veriler yüklenirken hata oluştu: ", error);
+        updateAveragePrice(prices);
     });
 }
 
-function renderPrices() {
-    priceList.innerHTML = '';
-    prices.forEach((priceEntry) => {
-        const listItem = document.createElement('li');
-        listItem.textContent = `${priceEntry.stock} - ${priceEntry.date}: ${priceEntry.price.toFixed(2)} TL`;
-        priceList.appendChild(listItem);
-    });
-    updateAveragePrice();
+function updateAveragePrice(prices) {
+    const total = prices.reduce((sum, entry) => sum + entry.price, 0);
+    const average = prices.length ? total / prices.length : 0;
+    averagePriceElement.textContent = average.toFixed(2);
 }
 
 priceForm.addEventListener('submit', function(event) {
@@ -86,34 +86,26 @@ dateInput.addEventListener('input', function(event) {
     dateInput.value = value; // Güncellenmiş değeri inputa yaz
 });
 
+// Geçmişi sıfırlama işlevi
 resetButton.addEventListener('click', function() {
     const enteredPassword = resetPassword.value;
 
     if (enteredPassword === correctPassword) {
-        // Firestore'dan tüm fiyatları sil
         db.collection("prices").get().then((querySnapshot) => {
-            const batch = db.batch();
             querySnapshot.forEach((doc) => {
-                batch.delete(doc.ref);
+                db.collection("prices").doc(doc.id).delete();
             });
-            return batch.commit();
         }).then(() => {
             alert('Geçmiş sıfırlandı.');
-            prices = []; // Fiyatları sıfırla
-            renderPrices(); // Fiyat listesini güncelle
+            loadPrices(); // Fiyat listesini güncelle
         }).catch((error) => {
-            console.error("Veriler sıfırlanırken hata oluştu: ", error);
+            console.error("Geçmiş sıfırlanırken hata oluştu: ", error);
         });
     } else {
         alert('Yanlış şifre. Lütfen tekrar deneyin.');
     }
 });
 
-function updateAveragePrice() {
-    const total = prices.reduce((sum, entry) => sum + entry.price, 0);
-    const average = prices.length ? total / prices.length : 0;
-    averagePriceElement.textContent = average.toFixed(2);
-}
 
 
 
