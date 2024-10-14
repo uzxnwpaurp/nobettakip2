@@ -4,6 +4,9 @@ const averagePriceElement = document.getElementById('averagePrice');
 
 let prices = JSON.parse(localStorage.getItem('prices')) || [];
 
+// Sayfa yüklendiğinde fiyatları göster
+renderPrices();
+
 function renderPrices() {
     priceList.innerHTML = '';
     prices.forEach((priceEntry) => {
@@ -33,7 +36,3 @@ function updateAveragePrice() {
     const average = prices.length ? total / prices.length : 0;
     averagePriceElement.textContent = average.toFixed(2);
 }
-
-// Sayfa yüklendiğinde fiyatları göster
-renderPrices();
-
