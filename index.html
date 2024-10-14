@@ -5,29 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nöbet Fiyat</title>
     <link rel="stylesheet" href="styles.css">
-
-    <!-- Firebase SDK (App ve Firestore için) -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-
-    <script>
-      // Firebase config dosyanız (Firebase Console'dan alın)
-      const firebaseConfig = {
-  apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
-  authDomain: "nobettakip-447bf.firebaseapp.com",
-  projectId: "nobettakip-447bf",
-  storageBucket: "nobettakip-447bf.appspot.com",
-  messagingSenderId: "685407754980",
-  appId: "1:685407754980:web:5e63808d0c36186afbaaf1",
-  measurementId: "G-N36D0ST83P"
-      };
-
-      // Firebase'i başlatın
-      firebase.initializeApp(firebaseConfig);
-
-      // Firestore veritabanı örneğini alın
-      const db = firebase.firestore();
-    </script>
+    <!-- Firebase SDK'larını dahil et -->
+    <script src="https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.18.0/firebase-firestore.js"></script>
 </head>
 <body>
     <div class="container">
@@ -71,86 +51,116 @@
     </div>
 
     <script>
-      // Formu işleyelim ve Firebase'e veri ekleyelim
-      document.getElementById('priceForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // Sayfanın yenilenmesini engelle
+        // Firebase SDK'nın başlatılması
+        const firebaseConfig = {
+  apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
+  authDomain: "nobettakip-447bf.firebaseapp.com",
+  projectId: "nobettakip-447bf",
+  storageBucket: "nobettakip-447bf.appspot.com",
+  messagingSenderId: "685407754980",
+  appId: "1:685407754980:web:5e63808d0c36186afbaaf1",
+  measurementId: "G-N36D0ST83P"
+        };
 
-        // Formdan veri al
-        const stock = document.getElementById('stock').value;
-        const date = document.getElementById('date').value;
-        const price = parseFloat(document.getElementById('price').value);
+        // Firebase'i başlat
+        firebase.initializeApp(firebaseConfig);
 
-        // Firebase Firestore'a veriyi ekle
-        db.collection("prices").add({
-          stock: stock,
-          date: date,
-          price: price,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(() => {
-          console.log("Veri başarıyla eklendi!");
-          document.getElementById('priceForm').reset(); // Formu sıfırla
-          loadPrices(); // Verileri yeniden yükle
-        })
-        .catch((error) => {
-          console.error("Hata oluştu: ", error);
-        });
-      });
+        // Firestore'a referans al
+        const db = firebase.firestore();
 
-      // Verileri çekme ve ekranda gösterme
-      function loadPrices() {
-        db.collection("prices").orderBy("timestamp", "desc").get().then((querySnapshot) => {
-          const priceList = document.getElementById('priceList');
-          priceList.innerHTML = ''; // Listeyi temizle
+        const priceForm = document.getElementById('priceForm');
+        const priceList = document.getElementById('priceList');
+        const averagePriceElement = document.getElementById('averagePrice');
+        const resetButton = document.getElementById('resetButton');
+        const resetPassword = document.getElementById('resetPassword');
 
-          let total = 0;
-          let count = 0;
+        // Şifre tanımla
+        const correctPassword = '79066540'; // Burada istediğin şifreyi belirleyebilirsin
 
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const priceItem = document.createElement('li');
-            priceItem.textContent = `${data.date} - ${data.stock}: ${data.price.toFixed(2)} TL`;
-            priceList.appendChild(priceItem);
+        // Sayfa yüklendiğinde fiyatları göster
+        loadPrices();
 
-            // Ortalama fiyat hesapla
-            total += data.price;
-            count++;
-          });
-
-          const averagePrice = (count > 0) ? (total / count).toFixed(2) : 0;
-          document.getElementById('averagePrice').textContent = `${averagePrice} TL`;
-
-        }).catch((error) => {
-          console.error("Veriler yüklenirken hata oluştu: ", error);
-        });
-      }
-
-      // Sayfa yüklendiğinde verileri çek
-      window.onload = loadPrices;
-
-      // Geçmişi sıfırlama
-      document.getElementById('resetButton').addEventListener('click', function() {
-        const password = document.getElementById('resetPassword').value;
-        if (password === '79066540') { // Sıfırlama için basit bir şifre doğrulaması
-          db.collection("prices").get().then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-              db.collection("prices").doc(doc.id).delete().then(() => {
-                console.log("Veri başarıyla silindi!");
-                loadPrices(); // Verileri güncelle
-              }).catch((error) => {
-                console.error("Silme hatası: ", error);
-              });
+        function loadPrices() {
+            db.collection("prices").get().then((querySnapshot) => {
+                priceList.innerHTML = ''; // Mevcut listeyi temizle
+                let prices = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    prices.push(data);
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${data.stock} - ${data.date}: ${data.price.toFixed(2)} TL`;
+                    priceList.appendChild(listItem);
+                });
+                updateAveragePrice(prices);
             });
-          }).catch((error) => {
-            console.error("Veri okuma hatası: ", error);
-          });
-        } else {
-          alert("Yanlış şifre!");
         }
-      });
-    </script>
 
+        function updateAveragePrice(prices) {
+            const total = prices.reduce((sum, entry) => sum + entry.price, 0);
+            const average = prices.length ? total / prices.length : 0;
+            averagePriceElement.textContent = average.toFixed(2);
+        }
+
+        priceForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const stock = document.getElementById('stock').value;
+            const date = document.getElementById('date').value;
+            const price = parseFloat(document.getElementById('price').value);
+
+            if (isNaN(price) || price <= 0) {
+                alert('Lütfen geçerli bir fiyat girin.');
+                return;
+            }
+
+            const priceEntry = { stock, date, price, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+
+            // Firestore'a veri ekle
+            db.collection("prices").add(priceEntry)
+            .then(() => {
+                alert('Fiyat başarıyla eklendi!');
+                loadPrices(); // Verileri yeniden yükle
+            })
+            .catch((error) => {
+                console.error("Veri eklenirken hata oluştu: ", error);
+            });
+        });
+
+        // Tarih alanına otomatik / ekleme
+        const dateInput = document.getElementById('date');
+        dateInput.addEventListener('input', function(event) {
+            let value = dateInput.value.replace(/[^0-9]/g, ''); // Sadece rakamları al
+            if (value.length >= 2) {
+                value = value.slice(0, 2) + '/' + value.slice(2); // gg/aa formatı
+            }
+            if (value.length >= 5) {
+                value = value.slice(0, 5) + '/' + value.slice(5); // gg/aa/yyyy formatı
+            }
+            dateInput.value = value; // Güncellenmiş değeri inputa yaz
+        });
+
+        // Geçmişi sıfırlama işlevi
+        resetButton.addEventListener('click', function() {
+            const enteredPassword = resetPassword.value;
+
+            if (enteredPassword === correctPassword) {
+                db.collection("prices").get().then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        db.collection("prices").doc(doc.id).delete();
+                    });
+                }).then(() => {
+                    alert('Geçmiş sıfırlandı.');
+                    loadPrices(); // Fiyat listesini güncelle
+                }).catch((error) => {
+                    console.error("Geçmiş sıfırlanırken hata oluştu: ", error);
+                });
+            } else {
+                alert('Yanlış şifre. Lütfen tekrar deneyin.');
+            }
+        });
+    </script>
 </body>
 </html>
+
 
 
