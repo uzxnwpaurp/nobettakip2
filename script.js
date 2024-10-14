@@ -5,7 +5,7 @@ const resetButton = document.getElementById('resetButton');
 const resetPassword = document.getElementById('resetPassword');
 
 // Şifre tanımla
-const correctPassword = '1234'; // Burada istediğin şifreyi belirleyebilirsin
+const correctPassword = '785978'; // Burada istediğin şifreyi belirleyebilirsin
 
 let prices = JSON.parse(localStorage.getItem('prices')) || [];
 
@@ -36,6 +36,19 @@ priceForm.addEventListener('submit', function(event) {
     renderPrices(); // Fiyatları güncelle
 });
 
+// Tarih alanına otomatik / ekleme
+const dateInput = document.getElementById('date');
+dateInput.addEventListener('input', function(event) {
+    let value = dateInput.value.replace(/[^0-9]/g, ''); // Sadece rakamları al
+    if (value.length >= 2) {
+        value = value.slice(0, 2) + '/' + value.slice(2); // gg/aa formatı
+    }
+    if (value.length >= 5) {
+        value = value.slice(0, 5) + '/' + value.slice(5); // gg/aa/yyyy formatı
+    }
+    dateInput.value = value; // Güncellenmiş değeri inputa yaz
+});
+
 resetButton.addEventListener('click', function() {
     const enteredPassword = resetPassword.value;
 
@@ -54,5 +67,6 @@ function updateAveragePrice() {
     const average = prices.length ? total / prices.length : 0;
     averagePriceElement.textContent = average.toFixed(2);
 }
+
 
 
