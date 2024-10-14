@@ -4,14 +4,39 @@ const averagePriceElement = document.getElementById('averagePrice');
 const resetButton = document.getElementById('resetButton');
 const resetPassword = document.getElementById('resetPassword');
 
+// Firebase yapılandırma bilgileri
+const firebaseConfig = {
+  apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
+  authDomain: "nobettakip-447bf.firebaseapp.com",
+  projectId: "nobettakip-447bf",
+  storageBucket: "nobettakip-447bf.appspot.com",
+  messagingSenderId: "685407754980",
+  appId: "1:685407754980:web:5e63808d0c36186afbaaf1",
+  measurementId: "G-N36D0ST83P"
+};
+
+// Firebase'i başlat
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(); // Firestore veritabanı örneğini al
+
 // Şifre tanımla
 const correctPassword = '79066540'; // Burada istediğin şifreyi belirleyebilirsin
 
-// LocalStorage'dan fiyatları yükle veya boş dizi oluştur
-let prices = JSON.parse(localStorage.getItem('prices')) || [];
-
 // Sayfa yüklendiğinde fiyatları göster
-renderPrices();
+window.onload = loadPrices;
+
+function loadPrices() {
+    db.collection("prices").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+        prices = []; // Önceki fiyatları sıfırla
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            prices.push(data);
+        });
+        renderPrices();
+    }).catch((error) => {
+        console.error("Veriler yüklenirken hata oluştu: ", error);
+    });
+}
 
 function renderPrices() {
     priceList.innerHTML = '';
@@ -35,11 +60,17 @@ priceForm.addEventListener('submit', function(event) {
         return;
     }
 
-    const priceEntry = { stock, date, price };
-    prices.push(priceEntry);
-    localStorage.setItem('prices', JSON.stringify(prices)); // Fiyatları kaydet
+    const priceEntry = { stock, date, price, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
 
-    renderPrices(); // Fiyatları güncelle
+    // Firestore'a veri ekle
+    db.collection("prices").add(priceEntry)
+    .then(() => {
+        alert('Fiyat başarıyla eklendi!');
+        loadPrices(); // Verileri yeniden yükle
+    })
+    .catch((error) => {
+        console.error("Veri eklenirken hata oluştu: ", error);
+    });
 });
 
 // Tarih alanına otomatik / ekleme
@@ -59,10 +90,20 @@ resetButton.addEventListener('click', function() {
     const enteredPassword = resetPassword.value;
 
     if (enteredPassword === correctPassword) {
-        localStorage.removeItem('prices'); // LocalStorage'dan fiyatları kaldır
-        prices = []; // Fiyatları sıfırla
-        renderPrices(); // Fiyat listesini güncelle
-        alert('Geçmiş sıfırlandı.');
+        // Firestore'dan tüm fiyatları sil
+        db.collection("prices").get().then((querySnapshot) => {
+            const batch = db.batch();
+            querySnapshot.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            return batch.commit();
+        }).then(() => {
+            alert('Geçmiş sıfırlandı.');
+            prices = []; // Fiyatları sıfırla
+            renderPrices(); // Fiyat listesini güncelle
+        }).catch((error) => {
+            console.error("Veriler sıfırlanırken hata oluştu: ", error);
+        });
     } else {
         alert('Yanlış şifre. Lütfen tekrar deneyin.');
     }
@@ -73,6 +114,7 @@ function updateAveragePrice() {
     const average = prices.length ? total / prices.length : 0;
     averagePriceElement.textContent = average.toFixed(2);
 }
+
 
 
 
