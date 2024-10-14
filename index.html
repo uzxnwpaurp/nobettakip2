@@ -55,9 +55,47 @@
     </div>
 
     <!-- Firebase'i başlatacak ve işlevleri içerecek script -->
-    <script src="script.js"></script>
+    <script>
+        // Firebase yapılandırma kodu
+        const firebaseConfig = {
+    apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
+    authDomain: "nobettakip-447bf.firebaseapp.com",
+    projectId: "nobettakip-447bf",
+    storageBucket: "nobettakip-447bf.appspot.com",
+    messagingSenderId: "685407754980",
+    appId: "1:685407754980:web:5e63808d0c36186afbaaf1",
+    measurementId: "G-N36D0ST83P"
+        };
+        
+        // Firebase'i başlat
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+
+        // Fiyat ekleme işlevi
+        document.getElementById('priceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const stock = document.getElementById('stock').value;
+            const date = document.getElementById('date').value;
+            const price = parseFloat(document.getElementById('price').value);
+            
+            try {
+                await db.collection('prices').add({
+                    stock: stock,
+                    date: date,
+                    price: price
+                });
+                document.getElementById('message').innerText = 'Fiyat başarıyla eklendi!';
+                loadPrices(); // Verileri güncelle
+            } catch (error) {
+                console.error("Hata:", error);
+                document.getElementById('message').innerText = 'Bir hata oluştu!';
+            }
+        });
+    </script>
 </body>
 </html>
+
 
 
 
