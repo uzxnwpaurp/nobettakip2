@@ -19,9 +19,80 @@
             appId: "1:685407754980:web:5e63808d0c36186afbaaf1",
             measurementId: "G-N36D0ST83P"
         };
+
         // Firebase'i başlat
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+
+        // Sayfa yüklendiğinde fiyatları getir
+        window.onload = async () => {
+            await fetchPrices();
+        };
+
+        // Fiyatları Firestore'dan çekme
+        async function fetchPrices() {
+            const priceList = document.getElementById('priceList');
+            priceList.innerHTML = ''; // Önceki listeyi temizle
+
+            const querySnapshot = await db.collection('prices').get();
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const li = document.createElement('li');
+                li.textContent = `${data.date} - ${data.stock}: ${data.price} TL`;
+                priceList.appendChild(li);
+            });
+            await calculateAveragePrice();
+        }
+
+        // Ortalama fiyatı hesaplama
+        async function calculateAveragePrice() {
+            const querySnapshot = await db.collection('prices').get();
+            let total = 0;
+            let count = 0;
+
+            querySnapshot.forEach((doc) => {
+                total += doc.data().price;
+                count++;
+            });
+
+            const average = count > 0 ? (total / count).toFixed(2) : 0;
+            document.getElementById('averagePrice').textContent = average + ' TL';
+        }
+
+        // Fiyat ekleme
+        document.getElementById('priceForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Sayfanın yeniden yüklenmesini engelle
+
+            const stock = document.getElementById('stock').value;
+            const date = document.getElementById('date').value;
+            const price = parseFloat(document.getElementById('price').value);
+
+            await db.collection('prices').add({
+                stock: stock,
+                date: date,
+                price: price
+            });
+
+            document.getElementById('message').textContent = 'Fiyat başarıyla eklendi!';
+            await fetchPrices(); // Fiyatları yeniden çek
+            document.getElementById('priceForm').reset(); // Formu sıfırla
+        });
+
+        // Geçmişi sıfırlama
+        document.getElementById('resetButton').addEventListener('click', async () => {
+            const password = document.getElementById('resetPassword').value;
+            if (password === '79066540') { // Burada kendi şifrenizi koyun
+                const querySnapshot = await db.collection('prices').get();
+                querySnapshot.forEach(async (doc) => {
+                    await db.collection('prices').doc(doc.id).delete();
+                });
+                document.getElementById('message').textContent = 'Geçmiş sıfırlandı!';
+                await fetchPrices(); // Fiyatları yeniden çek
+                document.getElementById('resetPassword').value = ''; // Şifre alanını sıfırla
+            } else {
+                document.getElementById('message').textContent = 'Yanlış şifre!';
+            }
+        });
     </script>
 </head>
 <body>
@@ -62,14 +133,13 @@
         <ul id="priceList"></ul>
 
         <h2>Ortalama Fiyat:</h2>
-        <p id="averagePrice">0.00</p>
+        <p id="averagePrice">0.00 TL</p>
 
         <p id="message" style="color: green;"></p> <!-- Başarı mesajı için alan -->
     </div>
-
-    <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
