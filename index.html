@@ -20,10 +20,8 @@
             measurementId: "G-N36D0ST83P"
         };
         // Firebase'i başlat
-        firebase.initializeApp(firebaseConfig);
-        // Firestore referansını al
+        const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const pricesRef = db.collection('prices'); // Koleksiyon adı
     </script>
 </head>
 <body>
@@ -46,11 +44,11 @@
                 <option value="Seçmeli (24 saat)">Seçmeli (24 saat)</option>
             </select>
 
-            <label for="date">Tarih:</label>
-            <input type="date" id="date" required>
+            <label for="date">Tarih (gg/aa/yyyy):</label>
+            <input type="text" id="date" placeholder="dd/mm/yyyy" required>
 
             <label for="price">Fiyat:</label>
-            <input type="number" id="price" step="0.01" min="0" required>
+            <input type="number" id="price" step="0.01" required>
 
             <button type="submit">Ekle</button>
         </form>
@@ -72,6 +70,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
