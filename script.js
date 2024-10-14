@@ -7,6 +7,7 @@ const resetPassword = document.getElementById('resetPassword');
 // Şifre tanımla
 const correctPassword = '79066540'; // Burada istediğin şifreyi belirleyebilirsin
 
+// LocalStorage'dan fiyatları yükle veya boş dizi oluştur
 let prices = JSON.parse(localStorage.getItem('prices')) || [];
 
 // Sayfa yüklendiğinde fiyatları göster
@@ -29,9 +30,14 @@ priceForm.addEventListener('submit', function(event) {
     const date = document.getElementById('date').value;
     const price = parseFloat(document.getElementById('price').value);
 
+    if (isNaN(price) || price <= 0) {
+        alert('Lütfen geçerli bir fiyat girin.');
+        return;
+    }
+
     const priceEntry = { stock, date, price };
     prices.push(priceEntry);
-    localStorage.setItem('prices', JSON.stringify(prices)); // Fiyatları kaydetme
+    localStorage.setItem('prices', JSON.stringify(prices)); // Fiyatları kaydet
 
     renderPrices(); // Fiyatları güncelle
 });
@@ -67,6 +73,7 @@ function updateAveragePrice() {
     const average = prices.length ? total / prices.length : 0;
     averagePriceElement.textContent = average.toFixed(2);
 }
+
 
 
 
