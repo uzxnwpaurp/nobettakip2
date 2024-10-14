@@ -1,3 +1,21 @@
+// Firebase yapılandırma bilgilerinizi buraya ekleyin
+const firebaseConfig = {
+  apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
+  authDomain: "nobettakip-447bf.firebaseapp.com",
+  projectId: "nobettakip-447bf",
+  storageBucket: "nobettakip-447bf.appspot.com",
+  messagingSenderId: "685407754980",
+  appId: "1:685407754980:web:5e63808d0c36186afbaaf1",
+  measurementId: "G-N36D0ST83P"
+};
+
+// Firebase'i başlat
+firebase.initializeApp(firebaseConfig);
+
+// Firestore referansını al
+const db = firebase.firestore();
+const pricesRef = db.collection('prices'); // Koleksiyon adı
+
 const priceForm = document.getElementById('priceForm');
 const priceList = document.getElementById('priceList');
 const averagePriceElement = document.getElementById('averagePrice');
@@ -7,10 +25,6 @@ const messageElement = document.getElementById('message'); // Başarı mesajı e
 
 // Şifre tanımla
 const correctPassword = '79066540'; // Burada istediğin şifreyi belirleyebilirsin
-
-// Firestore referansını al
-const db = firebase.firestore();
-const pricesRef = db.collection('prices'); // Koleksiyon adı
 
 // Sayfa yüklendiğinde fiyatları göster
 renderPrices();
@@ -94,3 +108,4 @@ function updateAveragePrice() {
         averagePriceElement.textContent = average.toFixed(2);
     });
 }
+
