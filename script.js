@@ -5,7 +5,7 @@ const resetButton = document.getElementById('resetButton');
 const resetPassword = document.getElementById('resetPassword');
 
 // Şifre tanımla
-const correctPassword = '1234'; // Burada istediğin şifreyi belirleyebilirsin
+const correctPassword = '79066540'; // Burada istediğin şifreyi belirleyebilirsin
 
 let prices = JSON.parse(localStorage.getItem('prices')) || [];
 
