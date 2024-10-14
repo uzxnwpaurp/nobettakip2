@@ -26,9 +26,9 @@ priceForm.addEventListener('submit', function(event) {
 
     const priceEntry = { stock, date, price };
     prices.push(priceEntry);
-    localStorage.setItem('prices', JSON.stringify(prices));
+    localStorage.setItem('prices', JSON.stringify(prices)); // Fiyatları kaydetme
 
-    renderPrices();
+    renderPrices(); // Fiyatları güncelle
 });
 
 function updateAveragePrice() {
@@ -36,3 +36,4 @@ function updateAveragePrice() {
     const average = prices.length ? total / prices.length : 0;
     averagePriceElement.textContent = average.toFixed(2);
 }
+
