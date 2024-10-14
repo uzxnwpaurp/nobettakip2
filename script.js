@@ -1,4 +1,8 @@
-// Firebase yapılandırma bilgilerinizi buraya ekleyin
+// Firebase SDK'sını modül olarak içe aktar
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js";
+
+// Firebase yapılandırma kodu
 const firebaseConfig = {
     apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
     authDomain: "nobettakip-447bf.firebaseapp.com",
@@ -10,11 +14,8 @@ const firebaseConfig = {
 };
 
 // Firebase'i başlat
-const app = firebase.initializeApp(firebaseConfig);
-
-// Firestore referansını al
-const db = firebase.firestore();
-const pricesRef = db.collection('prices');
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const priceForm = document.getElementById('priceForm');
 const priceList = document.getElementById('priceList');
@@ -28,22 +29,19 @@ const correctPassword = '79066540'; // Şifre kontrolü için kullanılacak
 // Sayfa yüklendiğinde fiyatları göster
 renderPrices();
 
-function renderPrices() {
+async function renderPrices() {
     priceList.innerHTML = '';
-    pricesRef.get().then(snapshot => {
-        snapshot.forEach(doc => {
-            const priceEntry = doc.data();
-            const listItem = document.createElement('li');
-            listItem.textContent = `${priceEntry.stock} - ${priceEntry.date}: ${priceEntry.price.toFixed(2)} TL`;
-            priceList.appendChild(listItem);
-        });
-        updateAveragePrice();
-    }).catch(error => {
-        console.error("Fiyatları yüklerken hata: ", error);
+    const snapshot = await getDocs(collection(db, 'prices'));
+    snapshot.forEach(doc => {
+        const priceEntry = doc.data();
+        const listItem = document.createElement('li');
+        listItem.textContent = `${priceEntry.stock} - ${priceEntry.date}: ${priceEntry.price.toFixed(2)} TL`;
+        priceList.appendChild(listItem);
     });
+    updateAveragePrice();
 }
 
-priceForm.addEventListener('submit', function(event) {
+priceForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     
     const stock = document.getElementById('stock').value;
@@ -57,17 +55,16 @@ priceForm.addEventListener('submit', function(event) {
         return;
     }
 
-    const priceEntry = { stock, date, price };
-
-    pricesRef.add(priceEntry).then(() => {
+    try {
+        await addDoc(collection(db, 'prices'), { stock, date, price });
         console.log("Başarıyla eklendi.");
         renderPrices();
         messageElement.textContent = "Başarıyla eklendi.";
         setTimeout(() => messageElement.textContent = '', 3000);
-    }).catch(error => {
+    } catch (error) {
         console.error("Hata eklerken: ", error);
         alert("Bir hata oluştu, lütfen tekrar deneyin.");
-    });
+    }
 });
 
 // Tarih alanına otomatik / ekleme
@@ -83,39 +80,34 @@ dateInput.addEventListener('input', function(event) {
     dateInput.value = value; // Güncellenmiş değeri inputa yaz
 });
 
-resetButton.addEventListener('click', function() {
+// Geçmişi sıfırlama
+resetButton.addEventListener('click', async function() {
     const enteredPassword = resetPassword.value;
 
     if (enteredPassword === correctPassword) {
-        pricesRef.get().then(snapshot => {
-            const batch = db.batch();
-            snapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            return batch.commit();
-        }).then(() => {
-            renderPrices();
-            alert('Geçmiş sıfırlandı.');
-            resetPassword.value = '';
-        }).catch(error => {
-            console.error("Geçmiş sıfırlanırken hata: ", error);
-            alert("Geçmişi sıfırlarken hata oluştu.");
+        const snapshot = await getDocs(collection(db, 'prices'));
+        const batch = writeBatch(db); // Batch işlemi oluştur
+        snapshot.forEach(doc => {
+            batch.delete(doc.ref); // Her dökümanı sil
         });
+        await batch.commit(); // Tüm silme işlemlerini uygula
+        renderPrices();
+        alert('Geçmiş sıfırlandı.');
+        resetPassword.value = '';
     } else {
         alert('Yanlış şifre. Lütfen tekrar deneyin.');
     }
 });
 
-function updateAveragePrice() {
-    pricesRef.get().then(snapshot => {
-        const prices = snapshot.docs.map(doc => doc.data().price);
-        const total = prices.reduce((sum, price) => sum + price, 0);
-        const average = prices.length ? total / prices.length : 0;
-        averagePriceElement.textContent = average.toFixed(2);
-    }).catch(error => {
-        console.error("Ortalama fiyat hesaplanırken hata: ", error);
-    });
+// Ortalama fiyat güncelleme
+async function updateAveragePrice() {
+    const snapshot = await getDocs(collection(db, 'prices'));
+    const prices = snapshot.docs.map(doc => doc.data().price);
+    const total = prices.reduce((sum, price) => sum + price, 0);
+    const average = prices.length ? total / prices.length : 0;
+    averagePriceElement.textContent = average.toFixed(2);
 }
+
 
 
 
