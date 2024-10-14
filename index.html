@@ -5,27 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nöbet Fiyat</title>
     <link rel="stylesheet" href="styles.css">
+
     <!-- Firebase SDK'ları -->
     <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js"></script>
-    <script>
-        // Firebase yapılandırma bilgilerinizi buraya ekleyin
-        const firebaseConfig = {
-            apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
-            authDomain: "nobettakip-447bf.firebaseapp.com",
-            projectId: "nobettakip-447bf",
-            storageBucket: "nobettakip-447bf.appspot.com",
-            messagingSenderId: "685407754980",
-            appId: "1:685407754980:web:5e63808d0c36186afbaaf1",
-            measurementId: "G-N36D0ST83P"
-        };
-        // Firebase'i başlat
-        firebase.initializeApp(firebaseConfig);
-
-        // Firestore referansını al
-        const db = firebase.firestore();
-        const pricesRef = db.collection('prices');
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-analytics.js"></script>
 </head>
 <body>
     <div class="container">
@@ -67,10 +51,12 @@
         <h2>Ortalama Fiyat:</h2>
         <p id="averagePrice">0.00</p>
 
-        <p id="message" style="color: green;"></p> <!-- Başarı mesajı için alan -->
+        <p id="message" style="color: green;"></p>
     </div>
 
+    <!-- Firebase'i başlatacak ve işlevleri içerecek script -->
     <script src="script.js"></script>
 </body>
 </html>
+
 
