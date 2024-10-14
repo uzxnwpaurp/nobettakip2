@@ -1,51 +1,31 @@
-// Firebase SDK'nın başlatılması
-const firebaseConfig = {
-  apiKey: "AIzaSyC035yNDCY-LKV_NHXxdDaJBcPM_HY_zW4",
-  authDomain: "nobettakip-447bf.firebaseapp.com",
-  projectId: "nobettakip-447bf",
-  storageBucket: "nobettakip-447bf.appspot.com",
-  messagingSenderId: "685407754980",
-  appId: "1:685407754980:web:5e63808d0c36186afbaaf1",
-  measurementId: "G-N36D0ST83P"
-};
-
-// Firebase'i başlat
-firebase.initializeApp(firebaseConfig);
-
-// Firestore'a referans al
-const db = firebase.firestore();
-
 const priceForm = document.getElementById('priceForm');
 const priceList = document.getElementById('priceList');
 const averagePriceElement = document.getElementById('averagePrice');
 const resetButton = document.getElementById('resetButton');
 const resetPassword = document.getElementById('resetPassword');
+const messageElement = document.getElementById('message'); // Başarı mesajı elementi
 
 // Şifre tanımla
 const correctPassword = '79066540'; // Burada istediğin şifreyi belirleyebilirsin
 
-// Sayfa yüklendiğinde fiyatları göster
-loadPrices();
+// Firestore referansını al
+const db = firebase.firestore();
+const pricesRef = db.collection('prices'); // Koleksiyon adı
 
-function loadPrices() {
-    db.collection("prices").get().then((querySnapshot) => {
-        priceList.innerHTML = ''; // Mevcut listeyi temizle
-        let prices = [];
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            prices.push(data);
+// Sayfa yüklendiğinde fiyatları göster
+renderPrices();
+
+function renderPrices() {
+    priceList.innerHTML = '';
+    pricesRef.get().then(snapshot => {
+        snapshot.forEach(doc => {
+            const priceEntry = doc.data();
             const listItem = document.createElement('li');
-            listItem.textContent = `${data.stock} - ${data.date}: ${data.price.toFixed(2)} TL`;
+            listItem.textContent = `${priceEntry.stock} - ${priceEntry.date}: ${priceEntry.price.toFixed(2)} TL`;
             priceList.appendChild(listItem);
         });
-        updateAveragePrice(prices);
+        updateAveragePrice();
     });
-}
-
-function updateAveragePrice(prices) {
-    const total = prices.reduce((sum, entry) => sum + entry.price, 0);
-    const average = prices.length ? total / prices.length : 0;
-    averagePriceElement.textContent = average.toFixed(2);
 }
 
 priceForm.addEventListener('submit', function(event) {
@@ -60,16 +40,15 @@ priceForm.addEventListener('submit', function(event) {
         return;
     }
 
-    const priceEntry = { stock, date, price, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+    const priceEntry = { stock, date, price };
 
-    // Firestore'a veri ekle
-    db.collection("prices").add(priceEntry)
-    .then(() => {
-        alert('Fiyat başarıyla eklendi!');
-        loadPrices(); // Verileri yeniden yükle
-    })
-    .catch((error) => {
-        console.error("Veri eklenirken hata oluştu: ", error);
+    // Firestore'a fiyat kaydet
+    pricesRef.add(priceEntry).then(() => {
+        renderPrices(); // Fiyatları güncelle
+        messageElement.textContent = "Başarıyla eklendi."; // Başarı mesajı göster
+        setTimeout(() => messageElement.textContent = '', 3000); // Mesajı 3 saniye sonra temizle
+    }).catch(error => {
+        console.error("Hata eklerken: ", error);
     });
 });
 
@@ -86,30 +65,32 @@ dateInput.addEventListener('input', function(event) {
     dateInput.value = value; // Güncellenmiş değeri inputa yaz
 });
 
-// Geçmişi sıfırlama işlevi
 resetButton.addEventListener('click', function() {
     const enteredPassword = resetPassword.value;
 
     if (enteredPassword === correctPassword) {
-        db.collection("prices").get().then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-                db.collection("prices").doc(doc.id).delete();
+        pricesRef.get().then(snapshot => {
+            const batch = db.batch();
+            snapshot.forEach(doc => {
+                batch.delete(doc.ref); // Tüm belgeleri sil
             });
+            return batch.commit();
         }).then(() => {
+            renderPrices(); // Fiyat listesini güncelle
             alert('Geçmiş sıfırlandı.');
-            loadPrices(); // Fiyat listesini güncelle
-        }).catch((error) => {
-            console.error("Geçmiş sıfırlanırken hata oluştu: ", error);
+        }).catch(error => {
+            console.error("Geçmiş sıfırlanırken hata: ", error);
         });
     } else {
         alert('Yanlış şifre. Lütfen tekrar deneyin.');
     }
 });
 
-
-
-
-
-
-
-
+function updateAveragePrice() {
+    pricesRef.get().then(snapshot => {
+        const prices = snapshot.docs.map(doc => doc.data().price);
+        const total = prices.reduce((sum, price) => sum + price, 0);
+        const average = prices.length ? total / prices.length : 0;
+        averagePriceElement.textContent = average.toFixed(2);
+    });
+}
