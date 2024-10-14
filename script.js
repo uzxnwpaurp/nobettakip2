@@ -14,17 +14,16 @@ firebase.initializeApp(firebaseConfig);
 
 // Firestore referansını al
 const db = firebase.firestore();
-const pricesRef = db.collection('prices'); // Koleksiyon adı
+const pricesRef = db.collection('prices');
 
 const priceForm = document.getElementById('priceForm');
 const priceList = document.getElementById('priceList');
 const averagePriceElement = document.getElementById('averagePrice');
 const resetButton = document.getElementById('resetButton');
 const resetPassword = document.getElementById('resetPassword');
-const messageElement = document.getElementById('message'); // Başarı mesajı elementi
+const messageElement = document.getElementById('message');
 
-// Şifre tanımla
-const correctPassword = '79066540'; // Burada istediğin şifreyi belirleyebilirsin
+const correctPassword = '79066540';
 
 // Sayfa yüklendiğinde fiyatları göster
 renderPrices();
@@ -39,6 +38,8 @@ function renderPrices() {
             priceList.appendChild(listItem);
         });
         updateAveragePrice();
+    }).catch(error => {
+        console.error("Fiyatları yüklerken hata: ", error);
     });
 }
 
@@ -46,7 +47,7 @@ priceForm.addEventListener('submit', function(event) {
     event.preventDefault();
     
     const stock = document.getElementById('stock').value;
-    const date = document.getElementById('date').value;
+    const date = document.getElementById('date').value; // Tarih artık doğal formatta
     const price = parseFloat(document.getElementById('price').value);
 
     if (isNaN(price) || price <= 0) {
@@ -54,30 +55,18 @@ priceForm.addEventListener('submit', function(event) {
         return;
     }
 
-    // Tarih kontrolü (gg/aa/yyyy formatı)
-    const isValidDate = (dateString) => {
-        const regex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$/;
-        return dateString.match(regex);
-    };
-    
-    if (!isValidDate(date)) {
-        alert('Lütfen geçerli bir tarih girin (gg/aa/yyyy).');
-        return;
-    }
-
     const priceEntry = { stock, date, price };
 
-    // Firestore'a fiyat kaydet
     pricesRef.add(priceEntry).then(() => {
-        renderPrices(); // Fiyatları güncelle
-        messageElement.textContent = "Başarıyla eklendi."; // Başarı mesajı göster
-        setTimeout(() => messageElement.textContent = '', 3000); // Mesajı 3 saniye sonra temizle
+        renderPrices();
+        messageElement.textContent = "Başarıyla eklendi.";
+        setTimeout(() => messageElement.textContent = '', 3000);
     }).catch(error => {
         console.error("Hata eklerken: ", error);
+        alert("Bir hata oluştu, lütfen tekrar deneyin.");
     });
 });
 
-// Geçmişi sıfırlama
 resetButton.addEventListener('click', function() {
     const enteredPassword = resetPassword.value;
 
@@ -85,15 +74,16 @@ resetButton.addEventListener('click', function() {
         pricesRef.get().then(snapshot => {
             const batch = db.batch();
             snapshot.forEach(doc => {
-                batch.delete(doc.ref); // Tüm belgeleri sil
+                batch.delete(doc.ref);
             });
             return batch.commit();
         }).then(() => {
-            renderPrices(); // Fiyat listesini güncelle
+            renderPrices();
             alert('Geçmiş sıfırlandı.');
-            resetPassword.value = ''; // Şifre alanını temizle
+            resetPassword.value = '';
         }).catch(error => {
             console.error("Geçmiş sıfırlanırken hata: ", error);
+            alert("Geçmişi sıfırlarken hata oluştu.");
         });
     } else {
         alert('Yanlış şifre. Lütfen tekrar deneyin.');
@@ -106,7 +96,10 @@ function updateAveragePrice() {
         const total = prices.reduce((sum, price) => sum + price, 0);
         const average = prices.length ? total / prices.length : 0;
         averagePriceElement.textContent = average.toFixed(2);
+    }).catch(error => {
+        console.error("Ortalama fiyat hesaplanırken hata: ", error);
     });
 }
+
 
 
