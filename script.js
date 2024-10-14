@@ -5,7 +5,7 @@ const resetButton = document.getElementById('resetButton');
 const resetPassword = document.getElementById('resetPassword');
 
 // Şifre tanımla
-const correctPassword = '785978'; // Burada istediğin şifreyi belirleyebilirsin
+const correctPassword = '1234'; // Burada istediğin şifreyi belirleyebilirsin
 
 let prices = JSON.parse(localStorage.getItem('prices')) || [];
 
@@ -67,6 +67,7 @@ function updateAveragePrice() {
     const average = prices.length ? total / prices.length : 0;
     averagePriceElement.textContent = average.toFixed(2);
 }
+
 
 
 
