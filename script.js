@@ -47,8 +47,18 @@ priceForm.addEventListener('submit', function(event) {
     event.preventDefault();
     
     const stock = document.getElementById('stock').value;
-    const date = document.getElementById('date').value; // Tarih artık doğal formatta
+    const date = document.getElementById('date').value; // Tarih artık dd/mm/yyyy formatında
     const price = parseFloat(document.getElementById('price').value);
+
+    // Tarih formatı kontrolü
+    const dateParts = date.split('/');
+    if (dateParts.length !== 3 || 
+        isNaN(dateParts[0]) || isNaN(dateParts[1]) || isNaN(dateParts[2]) ||
+        dateParts[0] < 1 || dateParts[0] > 31 ||
+        dateParts[1] < 1 || dateParts[1] > 12) {
+        alert('Lütfen geçerli bir tarih girin (gg/aa/yyyy).');
+        return;
+    }
 
     if (isNaN(price) || price <= 0) {
         alert('Lütfen geçerli bir fiyat girin.');
@@ -65,6 +75,19 @@ priceForm.addEventListener('submit', function(event) {
         console.error("Hata eklerken: ", error);
         alert("Bir hata oluştu, lütfen tekrar deneyin.");
     });
+});
+
+// Tarih alanına otomatik / ekleme
+const dateInput = document.getElementById('date');
+dateInput.addEventListener('input', function(event) {
+    let value = dateInput.value.replace(/[^0-9]/g, ''); // Sadece rakamları al
+    if (value.length >= 2) {
+        value = value.slice(0, 2) + '/' + value.slice(2); // gg/aa formatı
+    }
+    if (value.length >= 5) {
+        value = value.slice(0, 5) + '/' + value.slice(5); // gg/aa/yyyy formatı
+    }
+    dateInput.value = value; // Güncellenmiş değeri inputa yaz
 });
 
 resetButton.addEventListener('click', function() {
@@ -100,6 +123,7 @@ function updateAveragePrice() {
         console.error("Ortalama fiyat hesaplanırken hata: ", error);
     });
 }
+
 
 
 
