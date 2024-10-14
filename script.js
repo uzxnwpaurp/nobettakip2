@@ -1,6 +1,11 @@
 const priceForm = document.getElementById('priceForm');
 const priceList = document.getElementById('priceList');
 const averagePriceElement = document.getElementById('averagePrice');
+const resetButton = document.getElementById('resetButton');
+const resetPassword = document.getElementById('resetPassword');
+
+// Şifre tanımla
+const correctPassword = '1234'; // Burada istediğin şifreyi belirleyebilirsin
 
 let prices = JSON.parse(localStorage.getItem('prices')) || [];
 
@@ -31,9 +36,23 @@ priceForm.addEventListener('submit', function(event) {
     renderPrices(); // Fiyatları güncelle
 });
 
+resetButton.addEventListener('click', function() {
+    const enteredPassword = resetPassword.value;
+
+    if (enteredPassword === correctPassword) {
+        localStorage.removeItem('prices'); // LocalStorage'dan fiyatları kaldır
+        prices = []; // Fiyatları sıfırla
+        renderPrices(); // Fiyat listesini güncelle
+        alert('Geçmiş sıfırlandı.');
+    } else {
+        alert('Yanlış şifre. Lütfen tekrar deneyin.');
+    }
+});
+
 function updateAveragePrice() {
     const total = prices.reduce((sum, entry) => sum + entry.price, 0);
     const average = prices.length ? total / prices.length : 0;
     averagePriceElement.textContent = average.toFixed(2);
 }
+
 
